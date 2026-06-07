@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vätskebalans</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+}
+
+.event {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+}
+
+label {
+    display: block;
+    margin: 5px 0;
+}
+
+input[type=number] {
+    width: 80px;
+}
+
+.summary {
+    background: #f4f4f4;
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 8px;
+    font-size: 1.1em;
+}
+
+button {
+    padding: 10px;
+    margin-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Vätskebalans</h1>
+
+<div id="schedule"></div>
+
+<h2>Kräkningar</h2>
+
+<div id="vomit-list"></div>
+
+<button onclick="addVomiting()">+ Lägg till kräkning</button>
+
+<div class="summary">
+    <p><strong>Planerat:</strong> <span id="planned">0</span> ml</p>
+    <p><strong>Givet:</strong> <span id="given">0</span> ml</p>
+    <p><strong>Kräkningar:</strong> <span id="vomitTotal">0</span> ml</p>
+    <p><strong>Vätskebalans:</strong> <span id="balance">0</span> ml</p>
+</div>
+
+<button onclick="resetForm()">Rensa formulär</button>
+
+<script>
+
+const schedule = [
+["01:00","Medicin",33],
+["01:00","Vatten",140],
+
+["05:30","Mat",240],
+["05:30","Vatten",100],
+
+["06:00","Medicin",5],
+["06:00","Medicin",7],
+
+["08:15","Mat",100],
+["08:15","Vatten",130],
+
+["11:00","Mat",260],
+["11:00","Vatten",100],
+
+["14:00","Medicin",7],
+["14:00","Puré + vatten",280],
+
+["17:30","Mat",260],
+["17:30","Vatten",100],
+
+["18:00","Medicin",5],
+
+["22:00","Medicin",7],
+["22:00","Mat",125],
+["22:00","Vatten",55]
+];
+
+const container = document.getElementById("schedule");
+
+schedule.forEach((item,index)=>{
+
+const div=document.createElement("div");
+div.className="event";
+
+div.innerHTML=`
+<strong>${item[0]}</strong> - ${item[1]} (${item[2]} ml)<br>
+
+<label>
+<input type="checkbox"
+checked
+onchange="updateTotals()"
+id="check-${index}">
+Givet enligt plan
+</label>
+
+<label>
+Faktisk mängd:
+<input type="number"
+min="0"
+value="${item[2]}"
+id="amount-${index}"
+oninput="updateTotals()">
+ml
+</label>
+`;
+
+container.appendChild(div);
+
+});
+
+function updateTotals(){
+
+let planned=0;
+let given=0;
+
+schedule.forEach((item,index)=>{
+
+planned += item[2];
+
+const checked =
+document.getElementById(`check-${index}`).checked;
+
+const amount =
+parseFloat(document.getElementById(`amount-${index}`).value) || 0;
+
+if(checked){
+    given += item[2];
+}else{
+    given += amount;
+}
+
+});
+
+let vomit=0;
+
+document.querySelectorAll(".vomit").forEach(v=>{
+    vomit += parseFloat(v.value)||0;
+});
+
+document.getElementById("planned").textContent=planned;
+document.getElementById("given").textContent=given;
+document.getElementById("vomitTotal").textContent=vomit;
+document.getElementById("balance").textContent=given-vomit;
+
+}
+
+function addVomiting(){
+
+const div=document.createElement("div");
+
+div.innerHTML=`
+<label>
+Kräkning:
+<input type="number"
+class="vomit"
+min="0"
+value="0"
+oninput="updateTotals()">
+ml
+</label>
+`;
+
+document.getElementById("vomit-list").appendChild(div);
+
+}
+
+function resetForm(){
+location.reload();
+}
+
+updateTotals();
+
+</script>
+
+</body>
+</html>
