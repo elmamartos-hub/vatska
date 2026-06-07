@@ -10,40 +10,53 @@ body {
     font-family: Arial, sans-serif;
     max-width: 900px;
     margin: auto;
-    padding: 20px;
+    padding: 15px;
+    background: #f7f7f7;
 }
 
 h1 {
     text-align: center;
 }
 
-.event {
-    border: 1px solid #ddd;
-    padding: 10px;
-    margin-bottom: 8px;
-    border-radius: 8px;
+.timeblock {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 
-label {
-    display: block;
-    margin: 5px 0;
+.entry {
+    margin: 10px 0;
+    padding-left: 10px;
 }
 
 input[type=number] {
     width: 80px;
-}
-
-.summary {
-    background: #f4f4f4;
-    padding: 15px;
-    margin-top: 20px;
-    border-radius: 8px;
-    font-size: 1.1em;
+    padding: 5px;
 }
 
 button {
-    padding: 10px;
-    margin-top: 10px;
+    padding: 10px 15px;
+    margin: 5px 0;
+    cursor: pointer;
+}
+
+.summary {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    font-size: 1.1em;
+}
+
+.section {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 </style>
 </head>
@@ -54,16 +67,24 @@ button {
 
 <div id="schedule"></div>
 
-<h2>Kräkningar</h2>
+<div class="section">
+    <h2>Extra vätska</h2>
+    <div id="extra-list"></div>
+    <button onclick="addExtraFluid()">+ Lägg till extra vätska</button>
+</div>
 
-<div id="vomit-list"></div>
-
-<button onclick="addVomiting()">+ Lägg till kräkning</button>
+<div class="section">
+    <h2>Kräkningar</h2>
+    <div id="vomit-list"></div>
+    <button onclick="addVomiting()">+ Lägg till kräkning</button>
+</div>
 
 <div class="summary">
     <p><strong>Planerat:</strong> <span id="planned">0</span> ml</p>
     <p><strong>Givet:</strong> <span id="given">0</span> ml</p>
+    <p><strong>Extra vätska:</strong> <span id="extraTotal">0</span> ml</p>
     <p><strong>Kräkningar:</strong> <span id="vomitTotal">0</span> ml</p>
+    <hr>
     <p><strong>Vätskebalans:</strong> <span id="balance">0</span> ml</p>
 </div>
 
@@ -71,126 +92,205 @@ button {
 
 <script>
 
-const schedule = [
-["01:00","Medicin",33],
-["01:00","Vatten",140],
+const schedule = {
+    "01:00": [
+        ["Medicin", 33],
+        ["Vatten", 140]
+    ],
 
-["05:30","Mat",240],
-["05:30","Vatten",100],
+    "05:30": [
+        ["Mat", 240],
+        ["Vatten", 100]
+    ],
 
-["06:00","Medicin",5],
-["06:00","Medicin",7],
+    "06:00": [
+        ["Medicin", 5],
+        ["Medicin", 7]
+    ],
 
-["08:15","Mat",100],
-["08:15","Vatten",130],
+    "08:15": [
+        ["Mat", 100],
+        ["Vatten", 130]
+    ],
 
-["11:00","Mat",260],
-["11:00","Vatten",100],
+    "11:00": [
+        ["Mat", 260],
+        ["Vatten", 100]
+    ],
 
-["14:00","Medicin",7],
-["14:00","Puré + vatten",280],
+    "14:00": [
+        ["Medicin", 7],
+        ["Puré + vatten", 280]
+    ],
 
-["17:30","Mat",260],
-["17:30","Vatten",100],
+    "17:30": [
+        ["Mat", 260],
+        ["Vatten", 100]
+    ],
 
-["18:00","Medicin",5],
+    "18:00": [
+        ["Medicin", 5]
+    ],
 
-["22:00","Medicin",7],
-["22:00","Mat",125],
-["22:00","Vatten",55]
-];
+    "22:00": [
+        ["Medicin", 7],
+        ["Mat", 125],
+        ["Vatten", 55]
+    ]
+};
 
 const container = document.getElementById("schedule");
 
-schedule.forEach((item,index)=>{
+let counter = 0;
 
-const div=document.createElement("div");
-div.className="event";
+for (const time in schedule) {
 
-div.innerHTML=`
-<strong>${item[0]}</strong> - ${item[1]} (${item[2]} ml)<br>
+    const block = document.createElement("div");
+    block.className = "timeblock";
 
-<label>
-<input type="checkbox"
-checked
-onchange="updateTotals()"
-id="check-${index}">
-Givet enligt plan
-</label>
+    let html = `<h2>${time}</h2>`;
 
-<label>
-Faktisk mängd:
-<input type="number"
-min="0"
-value="${item[2]}"
-id="amount-${index}"
-oninput="updateTotals()">
-ml
-</label>
-`;
+    schedule[time].forEach(item => {
 
-container.appendChild(div);
+        html += `
+        <div class="entry">
 
-});
+            <strong>${item[0]}</strong>
+            (${item[1]} ml)
 
-function updateTotals(){
+            <br>
 
-let planned=0;
-let given=0;
+            <label>
+                <input type="checkbox"
+                       checked
+                       id="check-${counter}"
+                       onchange="updateTotals()">
+                Givet enligt plan
+            </label>
 
-schedule.forEach((item,index)=>{
+            <label>
+                Faktisk mängd:
+                <input type="number"
+                       value="${item[1]}"
+                       min="0"
+                       id="amount-${counter}"
+                       oninput="updateTotals()">
+                ml
+            </label>
 
-planned += item[2];
+        </div>
+        `;
 
-const checked =
-document.getElementById(`check-${index}`).checked;
+        counter++;
+    });
 
-const amount =
-parseFloat(document.getElementById(`amount-${index}`).value) || 0;
-
-if(checked){
-    given += item[2];
-}else{
-    given += amount;
+    block.innerHTML = html;
+    container.appendChild(block);
 }
 
-});
+function addExtraFluid() {
 
-let vomit=0;
+    const div = document.createElement("div");
 
-document.querySelectorAll(".vomit").forEach(v=>{
-    vomit += parseFloat(v.value)||0;
-});
+    div.innerHTML = `
+        <label>
+            Beskrivning:
+            <input type="text" placeholder="Extra vatten">
+        </label>
 
-document.getElementById("planned").textContent=planned;
-document.getElementById("given").textContent=given;
-document.getElementById("vomitTotal").textContent=vomit;
-document.getElementById("balance").textContent=given-vomit;
+        <label>
+            Mängd:
+            <input type="number"
+                   class="extra"
+                   value="0"
+                   min="0"
+                   oninput="updateTotals()">
+            ml
+        </label>
 
+        <hr>
+    `;
+
+    document.getElementById("extra-list").appendChild(div);
 }
 
-function addVomiting(){
+function addVomiting() {
 
-const div=document.createElement("div");
+    const div = document.createElement("div");
 
-div.innerHTML=`
-<label>
-Kräkning:
-<input type="number"
-class="vomit"
-min="0"
-value="0"
-oninput="updateTotals()">
-ml
-</label>
-`;
+    div.innerHTML = `
+        <label>
+            Mängd:
+            <input type="number"
+                   class="vomit"
+                   value="0"
+                   min="0"
+                   oninput="updateTotals()">
+            ml
+        </label>
 
-document.getElementById("vomit-list").appendChild(div);
+        <hr>
+    `;
 
+    document.getElementById("vomit-list").appendChild(div);
 }
 
-function resetForm(){
-location.reload();
+function updateTotals() {
+
+    let planned = 0;
+    let given = 0;
+
+    let index = 0;
+
+    for (const time in schedule) {
+
+        schedule[time].forEach(item => {
+
+            planned += item[1];
+
+            const checked =
+                document.getElementById(`check-${index}`).checked;
+
+            const actual =
+                parseFloat(
+                    document.getElementById(`amount-${index}`).value
+                ) || 0;
+
+            if (checked) {
+                given += item[1];
+            } else {
+                given += actual;
+            }
+
+            index++;
+        });
+    }
+
+    let extra = 0;
+
+    document.querySelectorAll(".extra").forEach(item => {
+        extra += parseFloat(item.value) || 0;
+    });
+
+    let vomit = 0;
+
+    document.querySelectorAll(".vomit").forEach(item => {
+        vomit += parseFloat(item.value) || 0;
+    });
+
+    const balance = given + extra - vomit;
+
+    document.getElementById("planned").textContent = planned;
+    document.getElementById("given").textContent = given;
+    document.getElementById("extraTotal").textContent = extra;
+    document.getElementById("vomitTotal").textContent = vomit;
+    document.getElementById("balance").textContent = balance;
+}
+
+function resetForm() {
+    if (confirm("Rensa dagens registreringar?")) {
+        location.reload();
+    }
 }
 
 updateTotals();
