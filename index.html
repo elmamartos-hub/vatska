@@ -80,12 +80,12 @@ button {
 </div>
 
 <div class="summary">
+    <p><strong>Vätskebalans:</strong> <span id="balance">0</span> ml</p>
+    <hr>
     <p><strong>Planerat:</strong> <span id="planned">0</span> ml</p>
     <p><strong>Givet:</strong> <span id="given">0</span> ml</p>
     <p><strong>Extra vätska:</strong> <span id="extraTotal">0</span> ml</p>
     <p><strong>Kräkningar:</strong> <span id="vomitTotal">0</span> ml</p>
-    <hr>
-    <p><strong>Vätskebalans:</strong> <span id="balance">0</span> ml</p>
 </div>
 
 <button onclick="resetForm()">Rensa formulär</button>
@@ -94,7 +94,6 @@ button {
 
 const schedule = {
     "01:00": [
-        ["Medicin", 33],
         ["Vatten", 140]
     ],
 
@@ -133,6 +132,7 @@ const schedule = {
     ],
 
     "22:00": [
+        ["Medicin", 33],
         ["Medicin", 7],
         ["Mat", 125],
         ["Vatten", 55]
